@@ -132,8 +132,9 @@ export interface SidebarOwnerProps {
 
 /** Conversation owner share: the frame's resolved wide-dock state. */
 export interface ConvOwnerProps {
-  /** True while the ultrawide dock column renders (text-only chat applies). */
-  wideDock: boolean
+  /** True while the ultrawide dock column renders (text-only chat applies);
+   * absent means the classic three-column layout. */
+  wideDock?: boolean
 }
 
 /** Details owner share: empty — sessionId arrives as a framework-standard prop. */

@@ -394,7 +394,7 @@ export function ChatView({
               key={nodeKey}
               nodeKey={nodeKey}
               useSession={useSession}
-              wideDock={wideDock}
+              {...(wideDock === undefined ? {} : { wideDock })}
               selectedCallId={selectedCallId}
               cwd={cwd}
               openFile={openFile}

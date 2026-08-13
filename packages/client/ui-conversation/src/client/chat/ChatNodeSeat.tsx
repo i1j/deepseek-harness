@@ -25,7 +25,9 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
   const owner = useMemo<ChatNodeOwnerProps | null>(() => node === undefined
     ? null
     : {
-      wideDock,
+      // Absent wide-dock state (classic layout) stays absent — the optional
+      // owner prop must not carry an explicit undefined (exactOptional).
+      ...(wideDock === undefined ? {} : { wideDock }),
       selectedCallId,
       cwd,
       openFile,

@@ -22,8 +22,8 @@ function settledTool(key: string, name: string, argsRaw: string, callTime: numbe
         callTime,
         content: [{ type: 'text', text: 'ok' }],
         isError: error,
-      },
-    } as ToolChatData['root'],
+      } as unknown as ToolChatData['root'],
+    },
   } as ChatNode
 }
 
@@ -150,7 +150,7 @@ describe('detailOf', () => {
       ['u1', 't1'],
       iconFor,
     )
-    const detail = detailOf(groups[0]!.items[0] as { key: string; kind: 'tool'; row: { argsRaw: string; resultText: string | null } })
+    const detail = detailOf(groups[0]!.items[0]!)
     expect(detail).toContain('{"a":1}')
     expect(detail).toContain('ok')
   })

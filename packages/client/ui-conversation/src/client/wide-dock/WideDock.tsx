@@ -30,7 +30,10 @@ import css from './WideDock.module.css'
 export type WideDockProps = PropsRuntime<'wide.dock'> & PropsLocale<'conversation'>
 
 /** Tool-name → glyph map (the tool plugin's VARIANT_ICONS family, extended
- * with per-MCP-server glyphs). Static so row memo keys stay stable. */
+ * with per-MCP-server glyphs). Static so row memo keys stay stable; the
+ * fallback glyph doubles as the map's `others` entry so lookups never
+ * need a non-null assertion. */
+const FALLBACK_ICON: ReturnType<typeof IconSearchOutline16> = <IconSparkle16 size={14} />
 const VARIANT_ICONS: Record<string, ReturnType<typeof IconSearchOutline16>> = {
   search: <IconSearchOutline16 size={14} />,
   read: <IconBrowseOutline16 size={14} />,
@@ -42,7 +45,7 @@ const VARIANT_ICONS: Record<string, ReturnType<typeof IconSearchOutline16>> = {
   'mcp-graphify': <IconDataOutline16 size={14} />,
   'mcp-openviking': <IconFolderOpenOutline16 size={14} />,
   'mcp-mentor': <IconQuestionOutline14 size={14} />,
-  others: <IconSparkle16 size={14} />,
+  others: FALLBACK_ICON,
 }
 
 /** Think-card glyph: a STATIC glowing lightbulb — bulb shape ported from
@@ -64,7 +67,7 @@ function ThinkGlyph() {
 
 /** Resolve the icon for one tool row. */
 function iconFor(name: string): ReturnType<typeof IconSearchOutline16> {
-  return VARIANT_ICONS[timelineVariantOf(name)] ?? VARIANT_ICONS.others
+  return VARIANT_ICONS[timelineVariantOf(name)] ?? FALLBACK_ICON
 }
 
 /** How much accumulated below-the-fold text triggers one page push (px). */
@@ -80,7 +83,7 @@ const PAGE_MIN = 120
 export function WideDock({ useSession, t }: WideDockProps) {
   const chat = useSession(s => s.chat)
   const groups = useMemo(() => deriveTimelineGroups(chat.nodes, chat.order, iconFor), [chat])
-  const lastKey = groups.length === 0 ? null : groups[groups.length - 1].key
+  const lastKey = groups.at(-1)?.key ?? null
   // Timeline selection (details pane content) is dock-local.
   const [selection, setSelection] = useState<TimelineItem | null>(null)
   /* compact (default): only the last turn's timeline; full: all turn titles. */
@@ -214,7 +217,7 @@ export function WideDock({ useSession, t }: WideDockProps) {
     </div>
   )
 
-  const lastGroup = groups.length === 0 ? null : groups[groups.length - 1]
+  const lastGroup = groups.length === 0 ? null : (groups[groups.length - 1] ?? null)
   return (
     <div className={css.root} data-wide-dock-panes>
       <section className={css.detailsPane} data-wide-pane="details">

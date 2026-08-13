@@ -245,7 +245,7 @@ export const UserMessageNodeView = memo(function UserMessageNodeView({
     <UserStyleBubble
       content={data.content}
       imageLoader={loadImage}
-      wideDock={wideDock}
+      {...(wideDock === undefined ? {} : { wideDock })}
       t={t}
       actions={text => (
         <MessageIconActions

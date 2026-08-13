@@ -24,7 +24,8 @@ export interface TimelineRow {
   /** Unix epoch ms of settlement, or null while running. */
   end: number | null
   argsRaw: string
-  resultText: string | null
+  /** Settled result content (string or block array); null while running. */
+  resultText: unknown
 }
 
 /** One timeline item: a Think card or a tool row. */
@@ -63,12 +64,12 @@ export function thinkPreview(text: string): string {
 /** First line of a user message, for the turn group label. */
 export function timelineUserLabel(node: ChatNode): string {
   const content = (node as { data?: { content?: unknown } }).data?.content
-  if (typeof content === 'string' && content.trim() !== '') return content.split('\n')[0].trim().slice(0, 48)
+  if (typeof content === 'string' && content.trim() !== '') return (content.split('\n')[0] ?? '').trim().slice(0, 48)
   if (Array.isArray(content)) {
     for (const part of content) {
       if (part !== null && typeof part === 'object' && typeof (part as { text?: unknown }).text === 'string'
         && (part as { text: string }).text.trim() !== '') {
-        return (part as { text: string }).text.split('\n')[0].trim().slice(0, 48)
+        return ((part as { text: string }).text.split('\n')[0] ?? '').trim().slice(0, 48)
       }
     }
   }
@@ -101,14 +102,27 @@ export function timelineVariantOf(name: string): string {
 export function timelineRowOf(node: ChatNode, iconFor: (name: string) => ReactNode): TimelineRow | null {
   const root = (node as ChatNode & { data?: ToolChatData }).data?.root
   if (root === undefined) return null
-  const settled = root.kind === 'tool-result'
-  const name = settled ? root.call?.name ?? 'tool' : root.name ?? 'tool'
-  const status: TimelineRow['status'] = !settled ? 'running' : root.isError === true ? 'error' : 'ok'
-  const start = settled ? root.callTime : root.time
-  const end = settled ? root.time : null
-  const argsRaw = settled ? root.call?.argsRaw ?? '' : root.argsRaw ?? ''
-  const resultText = settled ? root.content : null
-  return { name, icon: iconFor(name), status, start, end, argsRaw, resultText }
+  // 'kind' in block discriminates the lifecycle union (a running call carries
+  // no kind field; the settled result node does — the DetailsPanel pattern).
+  return 'kind' in root
+    ? {
+      name: root.call?.name ?? 'tool',
+      icon: iconFor(root.call?.name ?? 'tool'),
+      status: root.isError === true ? 'error' : 'ok',
+      start: root.callTime,
+      end: root.time,
+      argsRaw: root.call?.argsRaw ?? '',
+      resultText: root.content,
+    }
+    : {
+      name: root.name ?? 'tool',
+      icon: iconFor(root.name ?? 'tool'),
+      status: 'running',
+      start: root.time,
+      end: null,
+      argsRaw: root.argsRaw ?? '',
+      resultText: null,
+    }
 }
 
 /** Resolve the current (running, else latest) assistant reasoning block. */
@@ -119,7 +133,7 @@ export function currentThinking(
   if (nodes === undefined) return { text: null, running: false }
   const seq = order ?? []
   for (let i = seq.length - 1; i >= 0; i--) {
-    const node = nodes.get(seq[i]) as ChatNode | undefined
+    const node = nodes.get(seq[i] as string) as ChatNode | undefined
     if (node === undefined) continue
     if (node.kind === 'assistant-step') {
       const data = node.data as AssistantChatData

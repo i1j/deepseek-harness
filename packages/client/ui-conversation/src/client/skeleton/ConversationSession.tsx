@@ -166,7 +166,7 @@ export function ConversationSession({
   return (
     <div className={css.viewArea}>
       {active !== undefined && renderSlot('conversation.view', {
-        wideDock,
+        ...(wideDock === undefined ? {} : { wideDock }),
         inspect,
         onInspectDone: () => { actions.setInspect(null) },
       }, { only: active.id })}

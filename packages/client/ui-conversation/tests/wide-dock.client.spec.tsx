@@ -37,7 +37,7 @@ function sampleChat(): { order: string[]; nodes: Map<string, ChatNode> } {
           content: [{ type: 'text', text: 'a.txt b.txt' }],
           isError: false,
         },
-      } as ToolChatData['root'],
+      } as unknown as ToolChatData['root'],
     } as ChatNode],
   ])
   return { order, nodes }
@@ -94,7 +94,7 @@ describe('WideDock', () => {
           content: [{ type: 'text', text: 'x' }],
           isError: false,
         },
-      } as ToolChatData['root'],
+      } as unknown as ToolChatData['root'],
     } as ChatNode)
     mount(chat)
     // Section toggle is the only header button with aria-expanded=false.

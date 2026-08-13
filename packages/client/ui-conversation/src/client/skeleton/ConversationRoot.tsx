@@ -187,7 +187,7 @@ export function ConversationRoot({
     <div className={css.root} data-phase={phase} data-wide-dock={wideDock || undefined}>
       {renderSlot('conversation.session.header', {})}
       <div className={css.scrollBody} data-conversation-scroll="">
-        {renderSlot('conversation.session', { wideDock })}
+        {renderSlot('conversation.session', { ...(wideDock === undefined ? {} : { wideDock }) })}
         {composerSeat}
       </div>
     </div>

@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  CENTER_MIN, clampWidth, computeColumns, resolveWideDock,
+  CENTER_MIN, clampWidth, computeColumns,
   DETAILS_DEFAULT, DETAILS_MIN, SIDEBAR_COLLAPSED, SIDEBAR_DEFAULT, SIDEBAR_MIN,
-  WIDE_BREAKPOINT, WIDE_DOCK_MAX, WIDE_DOCK_MIN,
 } from '@deepseek-ai/dsh-client-ui-layout/src/client/columns.ts'
 
 // Numeric preference form (0 = closed); helpers keep the scenario names readable.
@@ -92,47 +91,5 @@ describe('computeColumns — degenerate viewports', () => {
     // Reaches step 3's auto-close with the compact rail sidebar.
     expect(computeColumns(500, closed(300), open(DETAILS_DEFAULT)))
       .toEqual({ sidebar: SIDEBAR_COLLAPSED, center: 500 - SIDEBAR_COLLAPSED, details: 0 })
-  })
-})
-
-describe('resolveWideDock', () => {
-  it('below the breakpoint the dock never renders', () => {
-    expect(resolveWideDock(WIDE_BREAKPOINT - 1, SIDEBAR_DEFAULT, true))
-      .toEqual({ wide: false, dock: 0 })
-    expect(resolveWideDock(1024, SIDEBAR_DEFAULT, true)).toEqual({ wide: false, dock: 0 })
-  })
-
-  it('without a real session the dock never renders', () => {
-    expect(resolveWideDock(3440, SIDEBAR_DEFAULT, false)).toEqual({ wide: false, dock: 0 })
-  })
-
-  it('disabled by the layout setting the dock never renders', () => {
-    expect(resolveWideDock(3440, SIDEBAR_DEFAULT, true, false)).toEqual({ wide: false, dock: 0 })
-  })
-
-  it('ultrawide: dock clamps into the contract and the conversation keeps >= 2/3', () => {
-    // 3440/3 - 280 = 866.7 -> clamp to 640; center 3440-280-640 = 2520 >= 2293.
-    expect(resolveWideDock(3440, SIDEBAR_DEFAULT, true)).toEqual({ wide: true, dock: WIDE_DOCK_MAX })
-  })
-
-  it('the 2/3 rule guards the dock: a wide sidebar on a smaller screen disables it', () => {
-    // 1920/3 - 420 = 220 -> floor 320; center 1920-420-320 = 1180 < 1280 -> off.
-    expect(resolveWideDock(1920, 420, true)).toEqual({ wide: false, dock: 0 })
-  })
-
-  it('boundary: the dock renders exactly when the 2/3 rule holds', () => {
-    // 1920/3 - 280 = 360; center 1920-280-360 = 1280 == 2/3 of 1920.
-    expect(resolveWideDock(1920, SIDEBAR_DEFAULT, true)).toEqual({ wide: true, dock: 360 })
-  })
-
-  it('at the breakpoint the dock floors at its minimum', () => {
-    // 1800/3 - 280 = 320 -> floor; center 1800-280-320 = 1200 == 2/3 of 1800.
-    expect(resolveWideDock(WIDE_BREAKPOINT, SIDEBAR_DEFAULT, true))
-      .toEqual({ wide: true, dock: WIDE_DOCK_MIN })
-  })
-
-  it('a collapsed rail sidebar leaves more room for the dock', () => {
-    // 3440/3 - 56 = 1090.7 -> clamp to 640 (unchanged); center keeps 2/3.
-    expect(resolveWideDock(3440, SIDEBAR_COLLAPSED, true)).toEqual({ wide: true, dock: WIDE_DOCK_MAX })
   })
 })

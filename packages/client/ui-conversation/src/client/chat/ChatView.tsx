@@ -145,7 +145,7 @@ function TurnStatus({ startTime, t }: {
  */
 export function ChatView({
   useSession, useSessions, useStore, renderSlot, sessionId, openFile, loadOlder, loadImage, inspectCall, chatScroll, forkAt,
-  fileMentions, t,
+  fileMentions, wideDock, t,
 }: ChatViewSlotProps) {
   const order = useSession(s => s.chat.order)
   const nodeStore = useSession(s => s.chat.nodes)
@@ -159,6 +159,16 @@ export function ChatView({
   const hasMore = useSession(s => s.hasMore)
   const loadingOlder = useSession(s => s.loadingOlder)
   const selectedCallId = useStore(s => s.selection?.callId)
+
+  // Text-only chat: while the ultrawide dock renders, tool-call rows leave
+  // the flow (they live in the dock's timeline) — the nodes stay in the
+  // snapshot for the dock to read, only the render order is filtered.
+  const visibleOrder = useMemo(
+    () => wideDock
+      ? order.filter(nodeKey => nodeStore.get(nodeKey)?.kind !== 'tool-call')
+      : order,
+    [wideDock, order, nodeStore],
+  )
 
   const pendingSteering = useMemo(
     () => inbox.filter(item => item.placement === 'steering'),
@@ -379,11 +389,12 @@ export function ChatView({
               </button>
             </div>
           )}
-          {order.map(nodeKey => (
+          {visibleOrder.map(nodeKey => (
             <ChatNodeSeat
               key={nodeKey}
               nodeKey={nodeKey}
               useSession={useSession}
+              {...(wideDock === undefined ? {} : { wideDock })}
               selectedCallId={selectedCallId}
               cwd={cwd}
               openFile={openFile}

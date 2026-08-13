@@ -34,3 +34,23 @@
   /* Optical align with 28px icon hit targets that pad 6px past the glyph. */
   margin-left: -6px;
 }
+
+/* LLM markdown text colors (ChatGPT-like scheme, token-driven so every theme
+   resolves them): inline code takes the shiki keyword hue, blockquotes get a
+   brand accent edge, h6 and table heads step down to the secondary tier. */
+.body :not(pre) > code {
+  color: var(--shiki-token-keyword);
+}
+
+.body blockquote {
+  border-left: 2px solid var(--dsw-alias-state-business-primary);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.body h6 {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.body th {
+  background: var(--dsw-alias-markdown-inline-code);
+}

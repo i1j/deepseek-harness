@@ -41,7 +41,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      * flow instead: `conversation.view` for a whole tab, the input regions for
      * composer chrome.
      */
-    'conversation.session': { kind: 'single'; scope: 'session' }
+    'conversation.session': { kind: 'single'; scope: 'session'; owner: ConversationSessionOwnerProps }
     /**
      * The strip above the session's scrollport: title, view tabs, and the
      * action row. Taking this seat means rendering all three yourself, and it
@@ -249,6 +249,13 @@ export interface HeroAgentPresetOwnerProps {
 /** Owner share of the strict session content seat. */
 export interface ConversationSessionOwnerProps {
   /**
+   * The frame's resolved wide-dock state: while the ultrawide dock renders,
+   * the conversation runs its text-only presentation (tool calls and inline
+   * reasoning move to the dock panes). Absent means the classic layout.
+   * Threaded down to the view ring.
+   */
+  wideDock?: boolean
+  /**
    * Wrap the view ring in the transcript scrollport that also hosts the
    * sticky composer seat (whole `'conversation.composer'` chain output).
    * Supplied for every real session (hero/settling/active) so the composer
@@ -283,6 +290,12 @@ export interface InputZone {
  * toolview hole).
  */
 export interface ConvViewOwnerProps {
+  /**
+   * The frame's resolved wide-dock state: while the ultrawide dock renders,
+   * the chat runs text-only (tool-call rows and inline reasoning move to the
+   * dock panes). Absent means the classic layout.
+   */
+  wideDock?: boolean
   /** One-shot inspect request from another view (chat's Inspect button); null when idle. */
   inspect?: { callId: CallId } | null
   /** Acknowledge the inspect request once applied (clears the store field). */
@@ -354,6 +367,13 @@ export interface ChatNodeTurnDataInjected {
 
 /** Stable owner currency delivered to one keyed Chat business renderer. */
 export interface ChatNodeOwnerProps {
+  /**
+   * The frame's resolved wide-dock state: while the ultrawide dock renders,
+   * reasoning blocks hide from the assistant flow (the dock's Think pane
+   * shows them live) and user bubbles go full-width. Absent means the
+   * classic layout.
+   */
+  wideDock?: boolean
   /** Selected Tool call, when the shared details store names one. */
   selectedCallId?: CallId | undefined
   /** Session workspace root; Tool summaries display paths relative to it. */

@@ -59,6 +59,18 @@ export class LayoutController implements ILayout {
     this.#require().closeDetails()
   }
 
+  /**
+   * Mirror the durable ultrawide-dock switch into the root store. Package-
+   * internal (not on the {@link ILayout} face): the apply world's settings
+   * subscription writes it; no cross-plugin caller exists. A no-op before
+   * attachPanels wired the actions (effect ordering safety, unlike the strict
+   * gesture face above).
+   * @param enabled - the settings-scope value.
+   */
+  setWideDockEnabled(enabled: boolean): void {
+    this.#panels?.setWideDockEnabled(enabled)
+  }
+
   #require(): PanelActions {
     // Callers are UI gestures, which cannot fire before the root entry
     // rendered (the inject hook runs in its first render) — reaching this

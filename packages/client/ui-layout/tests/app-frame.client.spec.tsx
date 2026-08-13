@@ -47,6 +47,12 @@ class ResizeObserverStub {
 
 let frameWidth = 1920
 
+/** Non-ultrawide reference width for the classic three-column behavior
+ * (>= the 1024 sidebar breakpoint but < the 1800 wide-dock breakpoint). */
+const CLASSIC_WIDE = 1600
+/** Ultrawide reference width for the wide-dock behavior. */
+const ULTRAWIDE = 3440
+
 /** Test-local selector hook over a framework-neutral store instance. */
 function hookOf<T>(inst: { subscribe: (fn: () => void) => () => void; getSnapshot: () => T }) {
   return function useSelector<S>(sel: (s: T) => S): S { return sel(useSyncExternalStore(inst.subscribe, inst.getSnapshot)) }
@@ -61,6 +67,7 @@ function mountFrame() {
     if (key === 'sidebar') return <div data-testid="sidebar-content" />
     if (key === 'conversation') return <div data-testid="center-content" />
     if (key === 'details') return <div data-testid="details-content" />
+    if (key === 'wide.dock') return <div data-testid="dock-content" />
     if (key === 'conversation.empty') return <div data-testid="empty-content" />
     return <div data-testid="other-content" />
   }) as AppFrameProps['renderSlot']
@@ -111,7 +118,7 @@ function drag(handle: Element, fromX: number, toX: number): void {
 }
 
 beforeEach(() => {
-  frameWidth = 1920
+  frameWidth = CLASSIC_WIDE
   selectedSession.current = 's-test' as SessionId
   selectedSessionBlank.current = false
   baselinesReady.current = true
@@ -142,7 +149,7 @@ describe('AppFrame', () => {
     expect(tracks(frame)).toEqual([280, 0])
   })
 
-  it('renders the session pair with empty owner shares (sessionId is framework-standard)', () => {
+  it('renders the session pair with owner shares (sessionId is framework-standard)', () => {
     const { slotCalls, getByTestId } = mountFrame()
     expect(getByTestId('center-content')).toBeTruthy()
     expect(getByTestId('details-content')).toBeTruthy()
@@ -150,7 +157,9 @@ describe('AppFrame', () => {
     expect(keys).toContain('conversation')
     expect(keys).toContain('details')
     expect(keys).not.toContain('conversation.empty')
-    expect(slotCalls.find(c => c.key === 'conversation')!.props).toEqual({})
+    // Classic width: the wide dock is off; the conversation hears it as an
+    // owner prop so text-only mode never diverges from the rendered columns.
+    expect(slotCalls.find(c => c.key === 'conversation')!.props).toEqual({ wideDock: false })
     expect(slotCalls.find(c => c.key === 'details')!.props).toEqual({})
   })
 
@@ -267,7 +276,7 @@ describe('AppFrame', () => {
     frameWidth = 1250
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
     expect(tracks(frame)).toEqual([280, 330])
-    frameWidth = 1920
+    frameWidth = CLASSIC_WIDE
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
     expect(tracks(frame)).toEqual([280, 360])
   })
@@ -306,7 +315,7 @@ describe('AppFrame — narrow-viewport auto-collapse', () => {
   })
 
   it('a wide-closed preference re-expands at the contract default while narrow', () => {
-    frameWidth = 1920
+    frameWidth = CLASSIC_WIDE
     const { frame, instance } = mountFrame()
     act(() => { instance.actions.toggleSidebar() }) // close while wide: preference 0
     frameWidth = 980
@@ -322,9 +331,69 @@ describe('AppFrame — narrow-viewport auto-collapse', () => {
     frameWidth = 980
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
     expect(tracks(frame)).toEqual([SIDEBAR_COLLAPSED, 0])
-    frameWidth = 1920
+    frameWidth = CLASSIC_WIDE
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
     expect(tracks(frame)).toEqual([400, 0])
+  })
+})
+
+describe('AppFrame — ultrawide dock', () => {
+  it('renders the dock column instead of details at ultrawide widths with a session', () => {
+    frameWidth = ULTRAWIDE
+    const { frame, slotCalls, getByTestId } = mountFrame()
+    // 3440 - 280 - 640 = 2520 >= 2/3 of 3440: the dock clamps to its max.
+    expect(tracks(frame)).toEqual([280, 640])
+    expect(getByTestId('dock-content')).toBeTruthy()
+    expect(() => getByTestId('details-content')).toThrow()
+    expect(frame.hasAttribute('data-wide-dock')).toBe(true)
+    expect(slotCalls.find(c => c.key === 'conversation')!.props).toEqual({ wideDock: true })
+    expect(slotCalls.map(c => c.key)).toContain('wide.dock')
+  })
+
+  it('the dock does not render without a real session', () => {
+    frameWidth = ULTRAWIDE
+    selectedSession.current = undefined
+    const { frame, slotCalls } = mountFrame()
+    expect(tracks(frame)).toEqual([280, 0])
+    expect(slotCalls.map(c => c.key)).not.toContain('wide.dock')
+  })
+
+  it('the durable wide-dock switch disables the dock even at ultrawide widths', () => {
+    frameWidth = ULTRAWIDE
+    const { frame, instance, slotCalls, getByTestId } = mountFrame()
+    expect(tracks(frame)).toEqual([280, 640])
+    act(() => { instance.actions.setWideDockEnabled(false) })
+    // The re-render swaps the dock back to the classic details column.
+    expect(tracks(frame)).toEqual([280, 0])
+    expect(getByTestId('details-content')).toBeTruthy()
+    expect(() => getByTestId('dock-content')).toThrow()
+    const lastKeys = slotCalls.slice(-4).map(c => c.key)
+    expect(lastKeys).toContain('details')
+    expect(lastKeys).not.toContain('wide.dock')
+  })
+
+  it('a blank session keeps the dock off (details column semantics preserved)', () => {
+    frameWidth = ULTRAWIDE
+    selectedSession.current = 's-blank' as SessionId
+    selectedSessionBlank.current = true
+    const { frame } = mountFrame()
+    expect(tracks(frame)).toEqual([280, 0])
+  })
+
+  it('the 2/3 rule disables the dock when a wide sidebar starves the conversation', () => {
+    frameWidth = 1920
+    const { frame, instance } = mountFrame()
+    act(() => { instance.actions.setSidebar(420) })
+    // 1920/3 - 420 = 220 -> dock floor 320; center 1180 < 1280 -> off.
+    expect(tracks(frame)).toEqual([420, 0])
+  })
+
+  it('dragging the sidebar while wide re-solves the dock from the new sidebar width', () => {
+    frameWidth = ULTRAWIDE
+    const { frame, instance } = mountFrame()
+    act(() => { instance.actions.setSidebar(420) })
+    // 3440 - 420 - 640 = 2380 >= 2293: still wide.
+    expect(tracks(frame)).toEqual([420, 640])
   })
 })
 

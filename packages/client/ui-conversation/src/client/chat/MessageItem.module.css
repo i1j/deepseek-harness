@@ -28,6 +28,25 @@
   color: var(--dsw-alias-label-primary);
 }
 
+/* Ultrawide text-only mode: user messages read as full-width narration rows
+   (left-aligned, square-ish bubble), matching the conversation-as-reading-area
+   contract of the wide dock. */
+.userRow[data-wide-dock] {
+  align-items: flex-start;
+}
+
+.userRow[data-wide-dock] .userStack {
+  align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.userRow[data-wide-dock] .bubble {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 12px;
+}
+
 .contextRow {
   padding: 2px 0;
 }

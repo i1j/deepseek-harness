@@ -42,6 +42,16 @@
   border-left: 1px solid var(--dsw-alias-border-l2);
 }
 
+/* Ultrawide dock column: same right-edge track as details, but its width is
+   solved by the wide-dock contract (columns.ts), not user drag. */
+.dockCol {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--dsw-alias-border-l2);
+}
+
 /* The details subtree stays mounted at zero width, so its border must not paint
    a 1px seam. The collapsed sidebar instead retains a bordered compact rail. */
 .frame[data-details-collapsed] .detailsCol {

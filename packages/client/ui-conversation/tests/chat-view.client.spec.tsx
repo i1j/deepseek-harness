@@ -445,6 +445,27 @@ describe('ChatView', () => {
       ])
   })
 
+  it('text-only mode (wide dock) filters tool-call rows from the flow', () => {
+    const h = makeHarness({
+      nodes: [user(1, 'do the thing'), assistant(2, 'running tools'), toolResult(3, 'a'), toolResult(4, 'b')],
+    })
+    h.props.wideDock = true
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.getByText('do the thing')).toBeTruthy()
+    expect(view.getByText('running tools')).toBeTruthy()
+    // Tool rows leave the flow (the dock's timeline shows them); the nodes
+    // themselves stay in the snapshot for the dock to read.
+    expect(view.queryByTestId('tool-seat-a')).toBeNull()
+    expect(view.queryByTestId('tool-seat-b')).toBeNull()
+    expect([...view.container.querySelectorAll('[data-chat-flow-key]')].map(row => ({
+      key: row.getAttribute('data-chat-flow-key'),
+      kind: row.getAttribute('data-chat-flow-kind'),
+    }))).toEqual([
+      { key: 'fixture:user:1', kind: 'user' },
+      { key: 'fixture:assistant:2', kind: 'assistant-step' },
+    ])
+  })
+
   it('renders Host-pending steering at the flow tail and hands off to the durable node', () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'clipboard', {

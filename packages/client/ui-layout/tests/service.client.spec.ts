@@ -16,6 +16,7 @@ function fakePanels(): PanelActions {
     setNarrow: vi.fn(),
     openDetails: vi.fn(),
     closeDetails: vi.fn(),
+    setWideDockEnabled: vi.fn(),
   }
 }
 
@@ -34,6 +35,19 @@ describe('LayoutController', () => {
     expect(panels.closeDetails).toHaveBeenCalledTimes(1)
     expect(panels.setSidebar).not.toHaveBeenCalled()
     expect(panels.setDetails).not.toHaveBeenCalled()
+  })
+
+  it('mirrors the wide-dock switch into the attached set and no-ops before wiring', () => {
+    const service = new LayoutController()
+    // Unwired mirror is a silent no-op (effect-order safety), unlike the
+    // strict gesture face.
+    expect(() => { service.setWideDockEnabled(false) }).not.toThrow()
+    const panels = fakePanels()
+    service.attachPanels(panels)
+    service.setWideDockEnabled(false)
+    service.setWideDockEnabled(true)
+    expect(panels.setWideDockEnabled).toHaveBeenNthCalledWith(1, false)
+    expect(panels.setWideDockEnabled).toHaveBeenNthCalledWith(2, true)
   })
 
   it('fails loud before the root entry wired its actions', () => {

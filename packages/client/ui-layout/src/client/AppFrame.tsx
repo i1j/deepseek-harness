@@ -13,14 +13,17 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { PropsRenderSlots, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
-import { computeColumns, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT } from './columns.ts'
+import {
+  clampWidth, computeColumns, resolveWideDock, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_COLLAPSED,
+  SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN,
+} from './columns.ts'
 import type { createLayoutStore } from './stores.ts'
 import css from './AppFrame.module.css'
 
 /** Full composed props: runtime share + child-slot render share + store share. */
 export type AppFrameProps =
   & PropsRuntime<'root'>
-  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
+  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'wide.dock' | 'shell.overlay'>
   & PropsStore<ReturnType<typeof createLayoutStore>>
 
 /** Center column grid item (session-body building block). */
@@ -31,6 +34,11 @@ function CenterColumn(props: { children?: ReactNode }) {
 /** Details column grid item; width 0 keeps the subtree mounted (never unmount on close). */
 function DetailsColumn(props: { children?: ReactNode }) {
   return <div className={css.detailsCol}>{props.children}</div>
+}
+
+/** Ultrawide dock column grid item; rendered only while the wide dock is active. */
+function DockColumn(props: { children?: ReactNode }) {
+  return <div className={css.dockCol} data-wide-dock>{props.children}</div>
 }
 
 /**
@@ -136,10 +144,27 @@ export function AppFrame({
   const narrow = viewport < SIDEBAR_AUTO_COLLAPSE
   useEffect(() => { actions.setNarrow(narrow) }, [actions, narrow])
   const sidebarCollapsed = narrow ? !panels.narrowExpanded : panels.sidebar === 0
-  const sidebarPreference = sidebarCollapsed
+  const sidebarRequest = sidebarCollapsed
     ? 0
     : panels.sidebar === 0 ? SIDEBAR_DEFAULT : panels.sidebar
-  const cols = computeColumns(viewport, sidebarPreference, detailsSession === undefined ? 0 : panels.details)
+  // The dock reservation uses the sidebar's RENDERED width (rail while
+  // collapsed); the wide solve runs before computeColumns because the dock
+  // itself subtracts from the viewport the classic solver sees.
+  const sidebarPx = sidebarRequest === 0 ? SIDEBAR_COLLAPSED : clampWidth(sidebarRequest, SIDEBAR_MIN, SIDEBAR_MAX)
+  const { wide, dock } = resolveWideDock(
+    viewport,
+    sidebarPx,
+    detailsSession !== undefined,
+    panels.wideDockEnabled,
+  )
+  // In wide mode the details column is superseded by the dock: the details
+  // preference is not forwarded (the dock's own panes own the selection), so
+  // Inspect-style opens stay inert on ultrawide screens by design.
+  const cols = computeColumns(
+    wide ? viewport - dock : viewport,
+    sidebarRequest,
+    wide ? 0 : detailsSession === undefined ? 0 : panels.details,
+  )
   const colsRef = useRef(cols)
   colsRef.current = cols
 
@@ -165,9 +190,10 @@ export function AppFrame({
     <div
       ref={frameRef}
       className={css.frame}
-      style={{ gridTemplateColumns: `${cols.sidebar}px minmax(0, 1fr) ${cols.details}px` }}
+      style={{ gridTemplateColumns: `${cols.sidebar}px minmax(0, 1fr) ${wide ? dock : cols.details}px` }}
       data-sidebar-collapsed={sidebarCollapsed || undefined}
       data-details-collapsed={cols.details === 0 || undefined}
+      data-wide-dock={wide || undefined}
       data-dragging={dragging || undefined}
     >
       <div className={css.sidebarCol}>
@@ -186,16 +212,22 @@ export function AppFrame({
             paint — no loading gate: a bare status line reads worse than
             the shell's own pending rendering. The conversation
             is session-maybe; the strict details entry naturally renders
-            empty while no session is current. */}
-        <CenterColumn>{renderSlot('conversation', {})}</CenterColumn>
-        <DetailsColumn>{renderSlot('details', {})}</DetailsColumn>
+            empty while no session is current. In wide mode the details
+            column yields to the dock: the conversation receives its
+            wide-dock state as an owner prop so the text-only chat and the
+            dock panes agree on one mode, and the classic details column
+            unmounts (its occupant is the dock's details pane instead). */}
+        <CenterColumn>{renderSlot('conversation', { wideDock: wide })}</CenterColumn>
+        {wide
+          ? <DockColumn>{renderSlot('wide.dock', {})}</DockColumn>
+          : <DetailsColumn>{renderSlot('details', {})}</DetailsColumn>}
       </>
       <div className={css.overlayLayer} data-shell-overlay>
         {renderSlot('shell.overlay', {})}
       </div>
       {/* The collapsed rail is fixed-width: no resize handle while closed. */}
       {!sidebarCollapsed && <DragHandle side="sidebar" left={cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
-      {cols.details > 0 && <DragHandle side="details" left={viewport - cols.details} onStart={onDetailsStart} onDrag={onDetailsDrag} onEnd={onDragEnd} />}
+      {cols.details > 0 && !wide && <DragHandle side="details" left={viewport - cols.details} onStart={onDetailsStart} onDrag={onDetailsDrag} onEnd={onDragEnd} />}
     </div>
   )
 }

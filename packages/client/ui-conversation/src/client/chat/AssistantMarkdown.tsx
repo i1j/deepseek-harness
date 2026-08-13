@@ -29,13 +29,16 @@ export interface AssistantMarkdownProps {
   loadImage?: ImageLoader
   /** Resolved prose file mentions for this Assistant's closing turn. */
   mentions?: MarkdownFileMentions | undefined
+  /** While the ultrawide dock renders, reasoning blocks leave the flow (the
+   * dock's Think pane shows them live instead). */
+  hideReasoning?: boolean | undefined
   /** The owning view's locale seat, passed down as a plain prop. */
   t: ChatViewSlotProps['t']
 }
 
 /** Reasoning block as the Think variant summary row (figma 39:28304). */
 export const AssistantMarkdown = memo(function AssistantMarkdown({
-  blocks, streaming, interrupted, loadImage, mentions, t,
+  blocks, streaming, interrupted, loadImage, mentions, hideReasoning, t,
 }: AssistantMarkdownProps) {
   const imageLoader = loadImage ?? (() => Promise.reject(new Error(t('image.serviceUnavailable'))))
   // Stable per locale revision (t identity changes on switch): a fresh object
@@ -45,9 +48,11 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
   // Tool-call heads render as tool rows in the chat view's grouping pass, so
   // a node that is only those heads (or empty) would paint an empty root
   // between tool groups — skip the shell unless something visible remains.
+  // Hidden reasoning (wide-dock text-only mode) counts as invisible too: a
+  // think-only node would otherwise paint an empty shell.
   const hasVisible = streaming
     || interrupted === true
-    || blocks.some(block => block.kind !== 'tool-call')
+    || blocks.some(block => block.kind !== 'tool-call' && !(hideReasoning && block.kind === 'reasoning'))
   if (!hasVisible) return null
   const rendered: ReactNode[] = []
   for (let i = 0; i < blocks.length; i++) {
@@ -66,6 +71,9 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
         )
         break
       case 'reasoning':
+        // While the ultrawide dock renders, reasoning is omitted from the
+        // flow entirely — the dock's Think pane is the reasoning surface.
+        if (hideReasoning) break
         rendered.push(<ReasoningRow key={i} text={block.text} running={streaming && i === last} t={t} />)
         break
       case 'image': {

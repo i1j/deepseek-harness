@@ -35,6 +35,7 @@ import { queueDockEntry } from './queue/QueueDock.tsx'
 import { ConversationRoot } from './skeleton/ConversationRoot.tsx'
 import { ConversationSession, ConversationSessionHeader } from './skeleton/ConversationSession.tsx'
 import { DetailsPanel } from './skeleton/DetailsPanel.tsx'
+import { WideDock } from './wide-dock/WideDock.tsx'
 import { en, NS, zh, type ConversationKey } from './locales.ts'
 import { registerConversationNodes } from './conversation-nodes/register.ts'
 import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
@@ -452,5 +453,14 @@ export function apply(ctx: Context): void {
       closeDetails: () => { layout.closeDetails() },
     }),
   }, DetailsPanel)
+
+  // The ultrawide dock panes: one occupant (details + timeline share
+  // selection state) into the layout frame's 'wide.dock' list seat.
+  slots.register({
+    name: 'wide.dock',
+    id: 'wide-dock',
+    order: 0,
+    locale: NS,
+  }, WideDock)
 
 }

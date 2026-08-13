@@ -172,6 +172,14 @@ export const zh = {
   'json.truncated': '… 已截断，共 {total} 字符',
   'clock.md': '{m}月{d}日',
   'clock.ymd': '{y}年{m}月{d}日',
+  'dock.details': '详情',
+  'dock.timeline': '工具时间线',
+  'dock.thinking': '思考中…',
+  'dock.clickHint': '点击下方时间线条目查看详情',
+  'dock.emptyTimeline': '还没有工具调用',
+  'dock.items': '{count} 项',
+  'dock.turns': '{count} 轮',
+  'dock.backToLive': '返回实时 Think',
 } satisfies Record<string, string>
 
 /** The conversation namespace key union. */
@@ -341,4 +349,12 @@ export const en = {
   'json.truncated': '… truncated, {total} characters total',
   'clock.md': '{m}/{d}',
   'clock.ymd': '{y}-{m}-{d}',
+  'dock.details': 'Details',
+  'dock.timeline': 'Tool timeline',
+  'dock.thinking': 'Thinking…',
+  'dock.clickHint': 'Click a timeline row below to view its details',
+  'dock.emptyTimeline': 'No tool calls yet',
+  'dock.items': '{count} items',
+  'dock.turns': '{count} turns',
+  'dock.backToLive': 'Back to live Think',
 } satisfies Record<ConversationKey, string>

@@ -25,6 +25,13 @@
   --dsh-composer-dock-inset: 8px;
 }
 
+/* Ultrawide text-only mode: the conversation is the full reading area of the
+   wide dock, so the transcript column widens with the available space instead
+   of staying at the classic 748px measure. */
+.root[data-wide-dock] {
+  --dsh-chat-content-width: min(1360px, calc(100% - 64px));
+}
+
 .header {
   position: relative;
   flex: none;

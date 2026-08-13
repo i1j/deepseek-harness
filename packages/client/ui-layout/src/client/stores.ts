@@ -12,15 +12,24 @@ import {
   clampWidth, DETAILS_DEFAULT, DETAILS_MAX, DETAILS_MIN,
   SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN,
 } from './columns.ts'
+import { DEFAULT_WIDE_DOCK } from '../layout-settings.ts'
 
 /**
  * Layout store state: panel width preferences in px (0 = closed), plus the
  * narrow-viewport pair — `narrow` mirrors AppFrame's breakpoint reading
  * (viewport < SIDEBAR_AUTO_COLLAPSE) so toggleSidebar can pick semantics, and
  * `narrowExpanded` is the manual override that re-expands the auto-collapsed
- * sidebar over the squeezed center without rewriting the width preference.
+ * sidebar over the squeezed center without rewriting the width preference —
+ * plus `wideDockEnabled`, the durable ultrawide-dock switch mirrored from the
+ * layout settings scope (defaults on; AppFrame's wide solve ANDs it).
  */
-type LayoutState = { sidebar: number; details: number; narrow: boolean; narrowExpanded: boolean }
+type LayoutState = {
+  sidebar: number
+  details: number
+  narrow: boolean
+  narrowExpanded: boolean
+  wideDockEnabled: boolean
+}
 
 /**
  * Annotation twin of the actions literal below (the export needs a declared
@@ -33,6 +42,7 @@ type LayoutActions = {
   setNarrow: (draft: LayoutState, narrow: boolean) => void
   openDetails: (draft: LayoutState) => void
   closeDetails: (draft: LayoutState) => void
+  setWideDockEnabled: (draft: LayoutState, enabled: boolean) => void
 }
 
 /**
@@ -47,7 +57,13 @@ type LayoutActions = {
  */
 export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutActions>  {
   const handle = defineStore({
-    init: (): LayoutState => ({ sidebar: SIDEBAR_DEFAULT, details: 0, narrow: false, narrowExpanded: false }),
+    init: (): LayoutState => ({
+      sidebar: SIDEBAR_DEFAULT,
+      details: 0,
+      narrow: false,
+      narrowExpanded: false,
+      wideDockEnabled: DEFAULT_WIDE_DOCK,
+    }),
     actions: {
       setSidebar: (d, px: number) => { d.sidebar = clampWidth(px, SIDEBAR_MIN, SIDEBAR_MAX) },
       setDetails: (d, px: number) => { d.details = clampWidth(px, DETAILS_MIN, DETAILS_MAX) },
@@ -66,6 +82,9 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
       },
       openDetails: (d) => { if (d.details === 0) d.details = DETAILS_DEFAULT },
       closeDetails: (d) => { d.details = 0 },
+      // Settings-scope mirror write (apply's subscription); a no-op guard is
+      // unnecessary — identical values are cheap and keep the mirror exact.
+      setWideDockEnabled: (d, enabled: boolean) => { d.wideDockEnabled = enabled },
     },
   })
   return handle

@@ -39,6 +39,52 @@ export const DETAILS_MAX = 520
 export const DETAILS_DEFAULT = 360
 
 /**
+ * Ultrawide dock: viewport width at/above which the shell reserves a right
+ * dock column (think + tool timeline panes) in addition to the classic
+ * sidebar | center | details tracks. Sized so the conversation column keeps
+ * at least 2/3 of the viewport (the ultrawide ergonomics contract).
+ */
+export const WIDE_BREAKPOINT = 1800
+/** Dock width contract: [320, 640]px, clamped into the leftover of a 2/3
+ * conversation column (viewport/3 minus the sidebar). */
+export const WIDE_DOCK_MIN = 320
+/** Dock width contract ceiling. */
+export const WIDE_DOCK_MAX = 640
+
+/** Resolved wide-dock geometry for one frame. */
+export interface WideDockResolution {
+  /** Whether the dock column is rendered this frame. */
+  wide: boolean
+  /** Rendered dock width in px (0 when not wide). */
+  dock: number
+}
+
+/**
+ * Resolve whether the ultrawide dock column renders and its width. The dock
+ * may take at most `viewport/3 - sidebar` so the conversation column keeps
+ * >= 2/3 of the viewport; it is disabled entirely when that would break the
+ * 2/3 rule (a very wide sidebar on a smaller screen) or when no real session
+ * is current (the dock panes are session-bound) or the feature is disabled.
+ * Pure: the output is a function of the inputs only.
+ * @param viewport - available frame width in px.
+ * @param sidebarPx - the sidebar's rendered width in px (rail when collapsed).
+ * @param hasSession - whether a non-blank session is current.
+ * @param enabled - whether the wide dock is enabled by the layout setting.
+ * @returns the resolved wide flag and dock width.
+ */
+export function resolveWideDock(
+  viewport: number,
+  sidebarPx: number,
+  hasSession: boolean,
+  enabled = true,
+): WideDockResolution {
+  if (!enabled || !hasSession || viewport < WIDE_BREAKPOINT) return { wide: false, dock: 0 }
+  const dockCandidate = Math.min(WIDE_DOCK_MAX, Math.max(WIDE_DOCK_MIN, Math.round(viewport / 3 - sidebarPx)))
+  const wide = viewport - sidebarPx - dockCandidate >= Math.round((viewport * 2) / 3)
+  return wide ? { wide: true, dock: dockCandidate } : { wide: false, dock: 0 }
+}
+
+/**
  * Clamp a panel width into its contract range.
  * @param px - requested width.
  * @param min - range lower bound.

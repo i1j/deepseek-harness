@@ -64,6 +64,13 @@ describe('theme boot index transform', () => {
     expect(document.body.hasAttribute(DARK_ATTRIBUTE)).toBe(false)
   })
 
+  it('deep-sea forces the dark scheme like dark (dark-only palette)', () => {
+    mockSystemDark(false)
+    executeBootstrap('deep-sea')
+    expect(document.documentElement.style.colorScheme).toBe('dark')
+    expect(document.body.hasAttribute(DARK_ATTRIBUTE)).toBe(true)
+  })
+
   it('appends the script to a body-less fragment', () => {
     const html = injectBootTheme('<main>loading</main>', 'dark')
     expect(html.startsWith('<main>loading</main><script>')).toBe(true)

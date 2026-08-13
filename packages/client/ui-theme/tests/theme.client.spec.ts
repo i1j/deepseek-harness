@@ -29,7 +29,7 @@ describe('ThemeRuntime', () => {
     // jsdom matchMedia is absent; system resolves to light.
     expect(snapshot.active.id).toBe('light')
     expect(snapshot.active.colorScheme).toBe('light')
-    expect(snapshot.themes.map(t => t.id)).toEqual(['light', 'dark'])
+    expect(snapshot.themes.map(t => t.id)).toEqual(['light', 'dark', 'deep-sea'])
   })
 
   it('setTheme switches, writes through the scope, republishes, and keeps DOM untouched', () => {
@@ -75,12 +75,12 @@ describe('ThemeRuntime', () => {
   it('registered themes join the snapshot; disposing the active one resets to default', () => {
     const { theme, events, host } = make()
     const dispose = theme.register({ id: 'sepia', colorScheme: 'light', tokens: { '--dsw-alias-bg-base': 'red' } })
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'sepia'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'deep-sea', 'sepia'])
     theme.setTheme('sepia')
     expect(theme.getTheme().active.tokens['--dsw-alias-bg-base']).toBe('red')
     dispose()
     expect(theme.getTheme().preference).toBe('system')
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'deep-sea'])
     // Custom ids are in-process extension themes; only the built-in product
     // preferences cross the Host settings schema.
     expect(host.set).not.toHaveBeenCalled()
@@ -88,6 +88,23 @@ describe('ThemeRuntime', () => {
     expect(events.length).toBe(3)
     dispose()
     expect(events.length).toBe(3)
+  })
+
+  it('deep-sea is a built-in dark palette preference that persists through the scope', () => {
+    const { theme, events, host } = make()
+    theme.setTheme('deep-sea')
+    expect(theme.getTheme().preference).toBe('deep-sea')
+    expect(theme.getTheme().active.id).toBe('deep-sea')
+    expect(theme.getTheme().active.colorScheme).toBe('dark')
+    // The token layer is applied wholesale (the 94-token deep-sea palette).
+    expect(theme.getTheme().active.tokens['--dsw-alias-bg-base']).toBe('rgb(10,14,22)')
+    expect(theme.getTheme().active.tokens['--dsw-alias-brand-primary']).toBe('rgb(63,200,232)')
+    expect(theme.getTheme().active.tokens['--dsw-specific-sidebar-fill']).toBe('rgb(9,13,21)')
+    // Built-in preferences persist through the Host settings scope.
+    expect(host.set).toHaveBeenCalledWith('preference', 'deep-sea')
+    expect(events).toHaveLength(1)
+    // A registered theme can never shadow the built-in id.
+    expect(() => theme.register({ id: 'deep-sea', colorScheme: 'dark', tokens: {} })).toThrow('already registered')
   })
 
   it('disposing an inactive theme keeps the active preference', () => {

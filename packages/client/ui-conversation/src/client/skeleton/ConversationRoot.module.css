@@ -25,6 +25,13 @@
   --dsh-composer-dock-inset: 8px;
 }
 
+/* Deep Sea palette (theme-scoped via the presenter's data-ds-theme mirror):
+   the conversation column is the L2 lit reading area — the one surface that
+   rises out of the dark sea floor, brighter than the base background. */
+:global(body[data-ds-theme="deep-sea"]) .root {
+  background: rgb(28, 35, 49);
+}
+
 .header {
   position: relative;
   flex: none;

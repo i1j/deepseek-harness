@@ -114,4 +114,32 @@ describe('ReasoningRow', () => {
     expect(view.container.querySelector('[class*="ioCard"]')).toBeNull()
     expect(view.container.querySelector('[class*="thinkBody"]')).not.toBeNull()
   })
+
+  it('hideReasoning (wide-dock text-only mode) drops the row and the shell for think-only nodes', () => {
+    const view = render(
+      <AssistantMarkdown
+        t={t}
+        blocks={[{ kind: 'reasoning', text: 'Inspect the session' }]}
+        streaming={false}
+        hideReasoning
+      />,
+    )
+    // The node had nothing visible left: no shell, no row.
+    expect(view.queryByText(/Inspect the session/)).toBeNull()
+    expect(view.container.querySelector('[class*="root"]')).toBeNull()
+
+    const mixed = render(
+      <AssistantMarkdown
+        t={t}
+        blocks={[
+          { kind: 'reasoning', text: 'hidden think' },
+          { kind: 'text', text: 'visible prose' },
+        ]}
+        streaming={false}
+        hideReasoning
+      />,
+    )
+    expect(mixed.queryByText('hidden think')).toBeNull()
+    expect(mixed.getByText('visible prose')).toBeTruthy()
+  })
 })

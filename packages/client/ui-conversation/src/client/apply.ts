@@ -455,12 +455,15 @@ export function apply(ctx: Context): void {
   }, DetailsPanel)
 
   // The ultrawide dock panes: one occupant (details + timeline share
-  // selection state) into the layout frame's 'wide.dock' list seat.
-  slots.register({
+  // selection state) into the layout frame's 'wide.dock' list seat. The seat
+  // is declared by ui-layout (cross-package slot), so the contribution rides
+  // slots.inject: it installs when the declaration exists and rolls back with
+  // the conversation fiber when the declaration (or this plugin) collapses.
+  ctx.slots.inject('wide.dock', () => ctx.slots.register({
     name: 'wide.dock',
     id: 'wide-dock',
     order: 0,
     locale: NS,
-  }, WideDock)
+  }, WideDock))
 
 }

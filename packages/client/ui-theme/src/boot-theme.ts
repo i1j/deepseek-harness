@@ -14,7 +14,8 @@ function bootThemeScript(preference: ThemePreference): string {
   const systemDark = preference === 'system'
     && typeof matchMedia !== 'undefined'
     && matchMedia('(prefers-color-scheme: dark)').matches
-  const dark = preference === 'dark' || systemDark
+  // Deep Sea is a dark-only palette: it forces the dark scheme like 'dark'.
+  const dark = preference === 'dark' || preference === 'deep-sea' || systemDark
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
   document.body.toggleAttribute('data-ds-dark-theme', dark)
 })()</script>`

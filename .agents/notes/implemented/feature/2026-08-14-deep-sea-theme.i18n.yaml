@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-14-deep-sea-theme.md
+2026-08-14-deep-sea-theme.md: 4c2164e042767734a9972c8008fb913007ae6151
+2026-08-14-deep-sea-theme.zh.md: ec476759797684dce8aa76f704240ae83cf3d0e9

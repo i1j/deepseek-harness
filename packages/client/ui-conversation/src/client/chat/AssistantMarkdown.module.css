@@ -34,3 +34,24 @@
   /* Optical align with 28px icon hit targets that pad 6px past the glyph. */
   margin-left: -6px;
 }
+
+/* Deep Sea palette markdown tiers (theme-scoped via the presenter's
+   data-ds-theme mirror): body text is the brightest bioluminescent soft-white
+   (the token layer already sets label-primary to it), headings sink toward
+   the sea floor as soft steel blue, strong text glows slightly brighter,
+   inline code turns sea-glass cyan, and h6 stays a quiet gray. */
+:global(body[data-ds-theme="deep-sea"]) .body :where(h1, h2, h3, h4, h5) {
+  color: rgb(100, 128, 168);
+}
+
+:global(body[data-ds-theme="deep-sea"]) .body :not(pre) > code {
+  color: rgb(94, 192, 226);
+}
+
+:global(body[data-ds-theme="deep-sea"]) .body strong {
+  color: rgb(146, 180, 222);
+}
+
+:global(body[data-ds-theme="deep-sea"]) .body h6 {
+  color: rgb(104, 118, 148);
+}

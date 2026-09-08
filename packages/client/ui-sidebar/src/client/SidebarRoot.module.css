@@ -42,6 +42,13 @@
   --dsh-scrollbar-thumb-hover: transparent;
 }
 
+/* Deep Sea palette (theme-scoped via the presenter's data-ds-theme mirror):
+   the sidebar is L0 environment chrome — recede further into the dark by
+   dimming its label tier one step below the conversation's reading text. */
+:global(body[data-ds-theme="deep-sea"]) .root {
+  --dsw-alias-label-primary: rgb(158, 170, 196);
+}
+
 /* Collapse phase 1: the whole frozen-width content fades out in place over
    150ms; at settle the children unmount/snap to the rail layout. */
 .fading > * {

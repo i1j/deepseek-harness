@@ -6,7 +6,9 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
-import { DARK_ATTRIBUTE, ThemePresenter } from '@deepseek-ai/dsh-client-ui-layout/src/client/theme-presenter.ts'
+import {
+  DARK_ATTRIBUTE, THEME_ATTRIBUTE, ThemePresenter,
+} from '@deepseek-ai/dsh-client-ui-layout/src/client/theme-presenter.ts'
 
 const LIGHT_THEME_COLOR = 'rgb(255, 255, 255)'
 const DARK_THEME_COLOR = 'rgb(21, 21, 23)'
@@ -29,6 +31,7 @@ beforeEach(() => {
   clearThemePresentation()
   document.documentElement.style.removeProperty('color-scheme')
   document.body.removeAttribute(DARK_ATTRIBUTE)
+  document.body.removeAttribute(THEME_ATTRIBUTE)
   document.body.removeAttribute('style')
   const style = document.createElement('style')
   style.dataset.themePresenterTest = ''
@@ -76,7 +79,17 @@ describe('ThemePresenter', () => {
     expect(document.body.style.getPropertyValue('--dsw-alias-fg')).toBe('')
   })
 
-  it('dispose removes color-scheme, the attribute, and every applied variable, sparing foreign inline styles', () => {
+  it('mirrors the active theme id so theme-scoped component styles can key off it', () => {
+    const presenter = new ThemePresenter()
+    presenter.apply(snapshot('dark'))
+    expect(document.body.getAttribute(THEME_ATTRIBUTE)).toBe('dark-test')
+    presenter.apply(snapshot('light'))
+    expect(document.body.getAttribute(THEME_ATTRIBUTE)).toBe('light-test')
+    presenter.dispose()
+    expect(document.body.hasAttribute(THEME_ATTRIBUTE)).toBe(false)
+  })
+
+  it('dispose removes color-scheme, the attributes, and every applied variable, sparing foreign inline styles', () => {
     document.body.style.setProperty('--foreign', 'kept')
     const presenter = new ThemePresenter()
     presenter.apply(snapshot('dark', { '--dsw-alias-bg': '#111' }))
@@ -84,6 +97,7 @@ describe('ThemePresenter', () => {
     presenter.dispose()
     expect(document.documentElement.style.colorScheme).toBe('')
     expect(document.body.hasAttribute(DARK_ATTRIBUTE)).toBe(false)
+    expect(document.body.hasAttribute(THEME_ATTRIBUTE)).toBe(false)
     expect(document.body.style.getPropertyValue('--dsw-alias-bg')).toBe('')
     expect(document.body.style.getPropertyValue('--foreign')).toBe('kept')
     expect(meta?.isConnected).toBe(false)

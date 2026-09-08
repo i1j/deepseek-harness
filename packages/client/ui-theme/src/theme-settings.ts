@@ -3,7 +3,7 @@
 import z from '@deepseek-ai/schemastery'
 
 /** Built-in preferences accepted at the registry and settings boundaries. */
-export const THEME_PREFERENCES = ['light', 'dark', 'system'] as const
+export const THEME_PREFERENCES = ['light', 'dark', 'system', 'deep-sea'] as const
 
 /** Settings namespace owned by the theme plugin. */
 export const THEME_SETTINGS_NAMESPACE = 'ui-theme'
@@ -22,7 +22,6 @@ export interface ThemeSettings {
   /** Selected built-in preference. */
   preference: ThemePreference
 }
-
 /** Durable theme schema; also the wire envelope the browser scope validates against. */
 export const ThemeSettingsSchema: z<ThemeSettings> = z.object({
   [THEME_PREFERENCE_FIELD]: z.union([...THEME_PREFERENCES]).default(DEFAULT_PREFERENCE),
